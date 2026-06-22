@@ -601,8 +601,8 @@ footer .mission{color:var(--mute2);margin-top:22px;font-size:.98rem}
 <section class="raiox" id="raiox">
   <div class="wrap">
     <div class="raiox-head">
-      <div class="eyebrow">O próximo passo</div>
-      <h2>Faça o <span class="hl">Raio-X</span> da sua empresa</h2>
+      <div class="eyebrow">Raio-X</div>
+      <h2>Faça o <span class="hl">diagnóstico</span> da sua empresa</h2>
       <p>12 perguntas, cerca de 4 minutos. Você descobre em que nível de prontidão a sua operação está pra implementar IA de verdade — e por onde começar.</p>
     </div>
 
@@ -638,8 +638,18 @@ footer .mission{color:var(--mute2);margin-top:22px;font-size:.98rem}
 const WEBHOOK_URL = "https://n8n-neurix-1.wbtech.dev/webhook/e00e3781-f733-4f96-b1c7-3369aa60a6ab";
 const WHATSAPP_NEURIX = "5541997889864"; // 41 99788-9864
 
+/* Perguntas e scoring sincronizados com rota-md.md */
+const SCORE_MAX = 36;
+
+const SCORING_TIERS = [
+  {max:29, tier:"Linha de largada", desc:"Sua empresa está onde a maioria das PMEs brasileiras está: sabe que IA importa, mas ainda não estruturou nada. É também o ponto de maior retorno por esforço investido — porque tudo que for organizado agora rende composto depois."},
+  {max:54, tier:"Uso solto", desc:"Você já entende o valor e a IA já circula pela empresa, mas sem arquitetura. Há gargalos estruturais segurando o retorno. Falta método e organização, não vontade."},
+  {max:77, tier:"Base estruturada", desc:"Sua operação tem fundações sólidas. Com os agentes certos nos pontos certos, o salto de 'usar IA' pra 'operar com IA' é questão de semanas, não de anos."},
+  {max:100, tier:"Pronto pra orquestrar", desc:"Você está à frente da maioria. O próximo passo não é começar — é orquestrar múltiplos agentes que conversam entre si e fazem a operação evoluir sozinha."}
+];
+
 const BLOCKS = [
-  {label:"Bloco 1 · Reconhecer", eixo:"R",
+  {label:"Bloco 1 · Reconhecer (R)", eixo:"R",
    questions:[
     {q:"Você consegue dizer hoje, com números, quais 3 processos mais consomem tempo da sua equipe?",
      opts:[["Não — nunca medi isso",0],["Tenho um palpite, sem dados",1],["Sei mais ou menos, de cabeça",2],["Sim, com números na mão",3]]},
@@ -648,7 +658,7 @@ const BLOCKS = [
     {q:"Você já mapeou, de forma estruturada, onde a IA daria retorno real na sua operação?",
      opts:[["Nunca pensei nisso de forma estruturada",0],["Pensei, mas não cheguei a lugar nenhum",1],["Tenho algumas hipóteses claras",2],["Sim, sei exatamente onde",3]]}
    ]},
-  {label:"Bloco 2 · Organizar", eixo:"O",
+  {label:"Bloco 2 · Organizar (O)", eixo:"O",
    questions:[
     {q:"Seus dados de cliente e operação estão centralizados?",
      opts:[["Espalhados entre planilha, WhatsApp e caderno",0],["Em vários sistemas que não conversam",1],["Maior parte num CRM, com furos",2],["Centralizados e organizados",3]]},
@@ -657,7 +667,7 @@ const BLOCKS = [
     {q:"Quantos sistemas diferentes sua equipe abre num dia normal?",
      opts:[["Perdi a conta — é um caos",0],["Uns 6 a 8",1],["Entre 3 e 5",2],["Um ou dois, tudo conectado",3]]}
    ]},
-  {label:"Bloco 3 · Testar", eixo:"T",
+  {label:"Bloco 3 · Testar (T)", eixo:"T",
    questions:[
     {q:"Qual é a sua relação com mexer em processos que já funcionam?",
      opts:[["Tenho medo de quebrar tudo",0],["Evito ao máximo",1],["Mexo com cautela",2],["Testo e meço sem medo",3]]},
@@ -666,7 +676,7 @@ const BLOCKS = [
     {q:"Você consegue medir o resultado de uma mudança em 30 dias?",
      opts:[["Não tenho como medir nada",0],["Só com muito esforço manual",1],["Consigo, mas demora",2],["Sim, tenho indicadores claros",3]]}
    ]},
-  {label:"Bloco 4 · Ampliar", eixo:"A",
+  {label:"Bloco 4 · Ampliar (A)", eixo:"A",
    questions:[
     {q:"Se um piloto de IA desse certo, você teria como levar pra outras áreas?",
      opts:[["Não saberia nem por onde",0],["Seria muito difícil",1],["Com ajuda, sim",2],["Sim, tenho clareza do caminho",3]]},
@@ -730,16 +740,14 @@ function computeAndShowScore(){
   eixoScore.R=eixoScore.O=eixoScore.T=eixoScore.A=0;
   QUESTIONS.forEach((Q,i)=>{eixoScore[Q.eixo]+=Q.opts[answers[i]][1];});
   const total=eixoScore.R+eixoScore.O+eixoScore.T+eixoScore.A;
-  const pct=Math.round((total/36)*100);
+  const pct=Math.round((total/SCORE_MAX)*100);
 
   const eixos=[["Reconhecer",eixoScore.R],["Organizar",eixoScore.O],["Testar",eixoScore.T],["Ampliar",eixoScore.A]];
   const fraco=eixos.reduce((a,b)=>b[1]<a[1]?b:a);
 
-  let tier,desc;
-  if(pct<30){tier="Linha de largada";desc="Sua empresa está onde a maioria das PMEs brasileiras está: sabe que IA importa, mas ainda não estruturou nada. É também o ponto de maior retorno por esforço investido — porque tudo que for organizado agora rende composto depois.";}
-  else if(pct<55){tier="Uso solto";desc="Você já entende o valor e a IA já circula pela empresa, mas sem arquitetura. Há gargalos estruturais segurando o retorno. Falta método e organização, não vontade.";}
-  else if(pct<78){tier="Base estruturada";desc="Sua operação tem fundações sólidas. Com os agentes certos nos pontos certos, o salto de 'usar IA' pra 'operar com IA' é questão de semanas, não de anos.";}
-  else{tier="Pronto pra orquestrar";desc="Você está à frente da maioria. O próximo passo não é começar — é orquestrar múltiplos agentes que conversam entre si e fazem a operação evoluir sozinha.";}
+  const tierInfo=SCORING_TIERS.find(t=>pct<=t.max)||SCORING_TIERS[SCORING_TIERS.length-1];
+  const tier=tierInfo.tier;
+  const desc=tierInfo.desc;
 
   const reco=`O eixo onde sua operação está mais exposta é o <b>${fraco[0]}</b>. É por aí que faz sentido começar — com um setor, uma atividade e um resultado mensurável em 30 dias. Não por tudo de uma vez.`;
 
@@ -803,6 +811,7 @@ function computeAndShowScore(){
 
     const payload={
       nome,empresa,segmento:seg,whatsapp:wpp,email,
+      score_pontos:total,
       score_total:pct,tier,
       eixo_reconhecer:Math.round((eixoScore.R/9)*100),
       eixo_organizar:Math.round((eixoScore.O/9)*100),
